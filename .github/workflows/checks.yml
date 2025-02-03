@@ -15,7 +15,7 @@ jobs:
           password: ${{ secrets.DOKR_PASS }}
         env:
           username: ${{ vars.DOKR_USR }}
-          
+          password: ${{ secrets.DOKR_PASS }}
       - name: Checkout
         uses: actions/checkout@v2
       - name: Test

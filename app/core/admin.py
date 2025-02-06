@@ -1,16 +1,39 @@
 """
 Django admin customisation
 """
-
-from django.contrib import admin 
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
-from . models import User
+from .models import User
 
-class UserAdmin(BaseUserAdmin):
+
+class CustomUserAdmin(BaseUserAdmin):
     """Define the admin pages for users"""
-    ordering = ['id']
-    list_display = ['name', 'email']
+    list_display = ('email', 'name', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('email', 'name')
+    ordering = ('email',)
+    filter_horizontal = ()
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Personal info', {'fields': ('name',)}),
+        ('Permissions', {'fields': ('is_active', 'is_superuser')}),
+    )
+    add_fieldsets = ((
+        None, {
+            'classes': ('wide',),
+            'fields': ('email', 'name', 'password1', 'password2', 'is_active')}
+        ),
+    )
 
-admin.site.register(User, UserAdmin)
+    def changelist_view(self, request, extra_context=None):
+        # Add custom context data if needed
+        extra_context = extra_context or {}
+        message = "Welcome to the user management panel!"
+        extra_context['custom_message'] = message
+
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+admin.site.register(User, CustomUserAdmin)

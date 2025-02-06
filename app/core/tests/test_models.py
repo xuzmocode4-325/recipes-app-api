@@ -1,5 +1,5 @@
 """
-Module for testing any models within the core app. 
+Module for testing any models within the core app.
 """
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 
 class ModelTests(TestCase):
     """
-    Class for testing models. 
+    Class for testing models.
     """
 
     def test_create_user_with_email_success(self):
@@ -15,7 +15,7 @@ class ModelTests(TestCase):
         email = 'test@example.com'
         password = 'test@123'
         user = get_user_model().objects.create_user(
-            email, 
+            email,
             password,
         )
 
@@ -37,15 +37,14 @@ class ModelTests(TestCase):
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_email_raises_error(self):
-        """Test that creating a new user without an email raises a value error."""
+        """Test creating a new user without an email raises a value error."""
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user('', 'test123')
 
-
-    def test_create_superuser(self): 
+    def test_create_superuser(self):
         """Test creating a superuser."""
         user = get_user_model().objects.create_superuser(
-            'test@example.com', 
+            'test@example.com',
             'test123'
         )
 

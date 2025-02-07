@@ -18,14 +18,28 @@ class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('name',)}),
-        ('Permissions', {'fields': ('is_active', 'is_superuser')}),
+        ('Permissions', {'fields': (
+            'is_active',
+            'is_staff',
+            'is_superuser')}),
+        ('Important Dates', {'fields': ('last_login',)})
     )
     add_fieldsets = ((
         None, {
             'classes': ('wide',),
-            'fields': ('email', 'name', 'password1', 'password2', 'is_active')}
+            'fields': (
+                'email',
+                'name',
+                'password1',
+                'password2',
+                'is_active',
+                'is_staff',
+                'is_superuser'
+                )
+            }
         ),
     )
+    readonly_fields = ['last_login']
 
     def changelist_view(self, request, extra_context=None):
         # Add custom context data if needed

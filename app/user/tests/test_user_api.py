@@ -125,12 +125,12 @@ class PrivateUserApiTest(TestCase):
 
     def setUp(self):
         self.user = create_user(
-            email = 'test@example.com',
-            password = 'examplepass123',
-            name = 'Test Name'
+            email='test@example.com',
+            password='examplepass123',
+            name='Test Name',
         )
         self.client = APIClient()
-        self.client.force_autenticate(user=self.user)
+        self.client.force_authenticate(user=self.user)
 
     def test_retrieve_profile_success(self):
         """Test profile retrieval for logged in user."""
@@ -146,7 +146,6 @@ class PrivateUserApiTest(TestCase):
         res = self.client.post(ME_URL, {})
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
     def test_update_user_profile(self):
         "Test profile update for authenticated users."
         payload = {
@@ -159,7 +158,3 @@ class PrivateUserApiTest(TestCase):
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-
-
-    

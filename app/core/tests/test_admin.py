@@ -30,7 +30,7 @@ class AdminSiteTests(TestCase):
         url = reverse('admin:core_user_changelist')
         res = self.client.get(url)
 
-        print(f"Response status code: {res.status_code}")
+        print(f"User list page response: {res.status_code}")
 
         self.assertContains(res, self.user.name)
         self.assertContains(res, self.user.email)
@@ -40,7 +40,7 @@ class AdminSiteTests(TestCase):
         url = reverse('admin:core_user_change', args=[self.user.id])
         res = self.client.get(url)
 
-        print(f"Response status code: {res.status_code}")
+        print(f"User edit page response: {res.status_code}")
 
         self.assertEqual(res.status_code, 200)
 
@@ -49,4 +49,5 @@ class AdminSiteTests(TestCase):
         url = reverse('admin:core_user_add')
         res = self.client.get(url)
 
+        print(f"Create user page response: {res.status_code}")
         self.assertEqual(res.status_code, 200)

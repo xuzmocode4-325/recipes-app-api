@@ -1,6 +1,9 @@
 """
 Database models.
 """
+import os
+import uuid
+from functools import partial
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
@@ -8,6 +11,13 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
+
+def model_image_file_path(instance, model, filename):
+    """Generate file path for new recipe image"""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', model, filename)
 
 
 class UserManager(BaseUserManager):
@@ -50,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Recipe(models.Model):
-    """Recipe objecct"""
+    """Recipe object"""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
@@ -62,6 +72,10 @@ class Recipe(models.Model):
     link = models.CharField(max_length=255, blank=True)
     tags = models.ManyToManyField('Tag')
     ingredients = models.ManyToManyField('Ingredient')
+    image = models.ImageField(
+        null=True, 
+        upload_to=partial(model_image_file_path, model='recipe')
+    )
 
     def __str__(self):
         return self.title

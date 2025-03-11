@@ -14,7 +14,7 @@ from recipe.serializers import IngredientSerializer
 
 INGREDIENTS_URL = reverse('recipe:ingredient-list')
 
-def detail_url(ingredient_id):
+def ingredient_detail_url(ingredient_id):
     """Create and return and ingredient detail URL"""
     return reverse('recipe:ingredient-detail', args=[ingredient_id])
 
@@ -63,6 +63,7 @@ class PrivateIngredientsApiTests(TestCase):
 
         user2 = create_user(email='user2@example.com')
         Ingredient.objects.create(user=user2, name='Salt')
+
         ingredient = Ingredient.objects.create(user=self.user, name='Pepper')
 
         res = self.client.get(INGREDIENTS_URL)
@@ -72,12 +73,12 @@ class PrivateIngredientsApiTests(TestCase):
         self.assertEqual(res.data[0]['name'], ingredient.name)
         self.assertEqual(res.data[0]['id'], ingredient.id)
 
-    def test_updat_ingredient(self):
+    def test_update_ingredient(self):
         """Test updating an ingredient"""
         ingredient = Ingredient.objects.create(user=self.user, name='Cilantro')
 
         payload = {'name': 'Cilantro'}
-        url = detail_url(ingredient.id)
+        url = ingredient_detail_url(ingredient.id)
         res = self.client.patch(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -88,7 +89,7 @@ class PrivateIngredientsApiTests(TestCase):
         """Test deleting an ingredients"""
         ingredient = Ingredient.objects.create(user=self.user, name='Lettuce')
 
-        url = detail_url(ingredient.id)
+        url = ingredient_detail_url(ingredient.id)
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)

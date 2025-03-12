@@ -87,6 +87,21 @@ class RecipeDetailSerializer(RecipeSerializer):
     """Serializer for recipe detail view"""
 
     class Meta(RecipeSerializer.Meta):
-        fields = RecipeSerializer.Meta.fields + ['description']
+        fields = RecipeSerializer.Meta.fields + ['description', 'image']
 
- 
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading recipe images""" 
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'image']
+        read_only_fields = ['id']
+        extra_kwargs ={'image': { 'required': True }}
+
+    def update(self, instance, validated_data):
+        """Update the instance with the validated data"""
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

@@ -418,7 +418,7 @@ class ImageUploadTests(TestCase):
             img = Image.new('RGB', (10, 10))
             img.save(image_file, format='JPEG')
             image_file.seek(0)
-            payload = {'image', image_file}
+            payload = {'image': image_file}
             res = self.client.post(url, payload, format='multipart')
 
         self.recipe.refresh_from_db()
@@ -429,7 +429,7 @@ class ImageUploadTests(TestCase):
     def test_upload_invalid_image(self):
         """Test uploading an invalid image."""
 
-        url = image_upload_url('reciper', self.recipe.id)
+        url = image_upload_url('recipe', self.recipe.id)
         payload = {'image': 'notanimage'}
         res = self.client.post(url, payload, format='multipart')
 

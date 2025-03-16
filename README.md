@@ -39,6 +39,7 @@ A `docker-compose.yml` file is used to define and manage multi-container Docker 
             *   `- "8000:8000"`
         *   **`volumes`**: Defines volume mappings between the host and the container.
             *   `- "./app:/app"`: Mounts the `./app` directory on the host to the `/app` directory in the container. This allows code changes on the host to be reflected inside the container, which is useful for development.
+            * `-"dev-static-data:/vol/web"`: Mounts `dev-static-data` volume to the `vol/web` directory in the container so that the data in it can persist data even if the container is removed. The purpose of this volume is to store static data that the application needs to access, such as images, stylesheets, or other assets.
         *   **`command`**: Specifies the command to run when the container starts.
             *   `sh -c "python manage.py wait_for_db && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"`: This command executes a shell script that first waits for the database to be available, then applies any pending database migrations, and finally starts the Django development server on host `0.0.0.0` and port `8000`.
         *   **`environment`**: Sets environment variables for the container.
@@ -57,7 +58,8 @@ A `docker-compose.yml` file is used to define and manage multi-container Docker 
             *   `- POSTGRES_USER=devuser`: Sets the database user to `devuser`.
             *   `- POSTGRES_PASSWORD=changeme`: Sets the database password to `changeme`.
 *   **`volumes`**: This section defines the named volumes used by the services.
-    *   **`dev-db-data`**: This is a named volume used by the `db` service to persist the database data.  Docker manages the creation and storage of this volume.
+    *   **`dev-db-data`**: This is a named volume used by the `db` service to persist the database data.  Docker manages the creation and storage of this volume. It is only used in development (hence the name `dev-db-data`), not production. 
+    *  **`dev-static`**: This is a named volume used by the `app` service to manage the storage of static and media files during development.  
 
 In summary, this `docker-compose.yml` file defines a multi-container application consisting of an application service (`app`) and a PostgreSQL database service (`db`). The application is configured to connect to the database using environment variables, and the database data is persisted using a named volume. The `DEV=true` argument suggests that this configuration is intended for a development environment[1][2]. Using `docker-compose up`  will start the application and all of its services.
 
@@ -77,10 +79,6 @@ Linting is configured through `flake8`, a Python tool that wraps other tools lik
 In essence, this configuration tells `flake8` to skip checking the style and potential errors in the `migrations` directory, `__pycache__` directories, and the `manage.py` and `settings.py` files. This is a common practice to avoid unnecessary warnings or errors in generated or configuration-specific files, focusing `flake8`'s analysis on the core application code.
 
 
-## Testing
-
-
-
 ## Docker Commands
 *   **`docker build .`** - This instruction builds the docker image using the specifications defined in the `Dockerfile`. 
 
@@ -91,3 +89,34 @@ In essence, this configuration tells `flake8` to skip checking the style and pot
     *    `--rm`: removes the container
     *    `app`: the name of the service
     *    `sh -c`: passes in a shell command
+
+## Testing
+
+*   **`docker compose run --rm app sh -c "python manage.py test"`** - This command runs the docker image and all the tests for each app using Django's built test module. 
+
+## Deployment 
+The run.sh file is prepares the application environment and starting the application server.
+
+Deployment is simplified and through the run.sh file, a shell script designed to automate the process of setting up and starting a web application using Django and uWSGI.
+
+
+
+Exit immediately if a command exits with a non-zero status
+`set -e` 
+
+Wait for the database to be ready before proceeding
+`python manage.py wait_for_db`
+
+Collect static files into the STATIC_ROOT directory without user input
+`python manage.py collectstatic --noinput`
+
+Apply database migrations to ensure the database schema is up to date
+`python manage.py migrate`
+
+Start the uWSGI application server with specified configurations
+- Listen on socket :9000
+- Use 4 worker processes
+- Run in master mode
+- Enable threading
+- Load the WSGI application from the app.wsgi module
+`uwsgi --socket :9000 --workers 4 --master --enable-threads --module app.wsgi`

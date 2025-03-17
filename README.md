@@ -26,10 +26,9 @@
 
 
 ## Docker Compose Configs
-A `docker-compose.yml` file is used to define and manage multi-container Docker applications. It allows you to configure application services using YAML rules. Here's an explanation of the provided `docker-compose.yml` file:
+A `docker-compose.yml` file is used to define and manage multi-container Docker applications during development. It allows you to configure application services using YAML rules. Here's an explanation of the provided `docker-compose.yml` file:
 
-*   **`services`**: This section defines the different containers (services) that make up the application[1].
-
+*   **`services`**: This section defines the different containers (services) that make up the application.
     *   **`app`**: This service represents the main application container.
         *   **`build`**: Specifies how to build the image for this service.
             *   **`context: .`**: Sets the build context to the current directory, meaning the Dockerfile (if used) and other necessary files are located here.
@@ -43,7 +42,7 @@ A `docker-compose.yml` file is used to define and manage multi-container Docker 
         *   **`command`**: Specifies the command to run when the container starts.
             *   `sh -c "python manage.py wait_for_db && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"`: This command executes a shell script that first waits for the database to be available, then applies any pending database migrations, and finally starts the Django development server on host `0.0.0.0` and port `8000`.
         *   **`environment`**: Sets environment variables for the container.
-            *   `- DB_HOST=db`: Sets the database host to `db`. Because Docker Compose uses the service names for automatic DNS resolution, `db` will resolve to the database container's IP address[1].
+            *   `- DB_HOST=db`: Sets the database host to `db`. Because Docker Compose uses the service names for automatic DNS resolution, `db` will resolve to the database container's IP address.
             *   `- DB_NAME=devdb`: Sets the database name to `devdb`.
             *   `- DB_USER=devuser`: Sets the database user to `devuser`.
             *   `- DB_PASS=changeme`: Sets the database password to `changeme`.
@@ -62,6 +61,46 @@ A `docker-compose.yml` file is used to define and manage multi-container Docker 
     *  **`dev-static`**: This is a named volume used by the `app` service to manage the storage of static and media files during development.  
 
 In summary, this `docker-compose.yml` file defines a multi-container application consisting of an application service (`app`) and a PostgreSQL database service (`db`). The application is configured to connect to the database using environment variables, and the database data is persisted using a named volume. The `DEV=true` argument suggests that this configuration is intended for a development environment[1][2]. Using `docker-compose up`  will start the application and all of its services.
+
+
+A `docker-compose-deploy.yml` file is used to define and manage multi-container Docker applications in production. During deployment a proxy server is set up to manage port mappings. 
+
+Here's an explanation of the provided `docker-compose-deploy.yml` file:
+
+*   **`services`**: Same as above.
+    *   **`app`**: Sane as above.
+        *   **`build`**: Same as above. 
+            *   **`context: .`**: Same as above. 
+        *   **`restart: always`**  # Always restart the app container on failure
+    *   **`environment`**: same as above (with placeholders for secret environment variables)
+        *   `- DB_HOST=db`: Sets the database host to `db`. Because Docker Compose uses the service names for automatic DNS resolution, `db` will resolve to the database container's IP address.
+        *   `- DB_NAME=${DB_NAME} `: Sets the database name to the `DB_NAME` secret.
+        *   `- DB_USER=${DB_USER}`:  Sets the database user to the `DB_USER` secret.
+        *   `- DB_PASS=${DB_PASS}`: Sets the database password to `DB_PASS` secret.
+        *   `- SECRET_KEY=${DJANGO_KEY}`: Sets the value of the `SECRET_KEY` settings variable to the `DJANGO_KEY` secret.
+        *   `- ALLOWED_HOSTS=${DJANGO_HOSTS}`: Sets the value of the `ALLOWED_HOSTS` settings variable to the `DJANGO_HOSTS` secret. 
+    *   **`depends_on`**: same as above. 
+*   **`db`**: Same as above. 
+    *   **`image`**: Same as above. 
+    *   **`volumes`**: Same as above.
+        *   `- postgres-data:/var/lib/postgresql/data`: Mounts a named volume `postgress-data` to the `/var/lib/postgresql/data` directory in the container, which is where PostgreSQL stores its data. This ensures that the database data persists even when the container is stopped or removed.
+    *   **`environment`**: Same as above. 
+        *   `- POSTGRES_DB=${DB_NAME}`: Sets the database name to `devdb`.
+        *   `- POSTGRES_USER=${DB_USER}`: Sets the database user to `devuser`.
+        *   `- POSTGRES_PASSWORD=${DB_PASS}`: Sets the database password to `changeme`.
+*   **`proxy`:**:
+    *  **`build`:**
+        *   **`context:`** ./proxy  Provides the context for building the proxy image
+    *   **`restart: always`**  Always restart the proxy container on failure
+    *   **`depends_on:`**
+        *   `- app`  Ensures the app service is started before the proxy
+    *   **`ports:`**
+        *   `- 8000:8000`  Maps port 8000 of the host to port 8000 of the proxy
+    *   **`volumes:`**
+        *   `- static-data:/vol/static`  Mounts the static data volume to the proxy
+*   **`volumes`**: Same as above. 
+    *   **`postgres-data`**: Same as above (for production).
+    *  **`static-data`**: Same as above (for productions). 
 
 
 ## Linting

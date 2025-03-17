@@ -394,6 +394,111 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
 
+    def test_create_ingredient_on_update(self):
+        """Test creating an ingredient when updating a recipt"""
+        recipe = create_recipe(user=self.user)
+
+        payload = {'ingredients': [{'name':'Limes'}]}
+        url = recipe_detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_ingredient = Ingredient.objects.get(user=self.user, name='Limes')
+
+        self.assertIn(new_ingredient, recipe.ingredients.all())
+
+    def test_update_recipe_assign_ingredient(self):
+        """Test assinging an existing ingredient when updating a recipe"""
+        ingredient1 =  Ingredient.objects.create(user=self.user, name='Pepper')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(ingredient1)
+
+        ingredient2 = Ingredient.objects.create(user=self.user, name='Chilli')
+
+        payload = {'ingredients': [{'name':'Chilli'}]}
+        url = recipe_detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(ingredient2, recipe.ingredients.all())
+        self.assertNotIn(ingredient1, recipe.ingredients.all())
+
+    def test_clear_recipe_ingredients(self):
+        """Test clearing a recipe ingredients"""
+        ingredient = Ingredient.objects.create(user=self.user, name='Garlic')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(ingredient)
+
+        payload = {'ingredients': []}
+        url = recipe_detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.ingredients.count(), 0)
+
+    def test_filter_by_tags(self):
+        """Test filtering recipes by tags"""
+        r1 = create_recipe(user=self.user, title='Thai Vegggie Curry')
+        r2 = create_recipe(user=self.user, title='Egg Plant & Tahini Pasta')
+
+        tag1 =  Tag.objects.create(user=self.user, name='Vegan')
+        tag2 =  Tag.objects.create(user=self.user, name='Vegetarian')
+
+        r1.tags.add(tag1)
+        r2.tags.add(tag2)
+
+        r3 = create_recipe(user=self.user, title='Fish & Chips')
+
+        params = {'tags': f'{tag1.id}, {tag2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(r1)
+        s1_dict = s1.data 
+
+        s2 = RecipeSerializer(r2)
+        s2_dict = s2.data 
+
+        s3 = RecipeSerializer(r3)
+        s3_dict = s3.data 
+
+        self.assertIn(s1_dict, res.data)
+        self.assertIn(s2_dict, res.data)
+        self.assertNotIn(s3_dict, res.data)
+
+    def test_filter_by_ingredients(self):
+        """Test filtering recipes by tags"""
+        r1 = create_recipe(user=self.user, title='Thai Vegggie Curry')
+        r2 = create_recipe(user=self.user, title='Egg Plant & Tahini Pasta')
+
+        ingredient1 =  Ingredient.objects.create(
+            user=self.user, name='Green Chilli'
+        )
+
+        ingredient2 =  Ingredient.objects.create(
+            user=self.user, name='Egg Plant'
+        )
+
+        r1.ingredients.add(ingredient1)
+        r2.ingredients.add(ingredient2)
+
+        r3 = create_recipe(user=self.user, title='Red Lentil Dal')
+
+        params = {'ingredients': f'{ingredient1.id}, {ingredient2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(r1)
+        s1_dict = s1.data 
+
+        s2 = RecipeSerializer(r2)
+        s2_dict = s2.data 
+
+        s3 = RecipeSerializer(r3)
+        s3_dict = s3.data 
+
+        self.assertIn(s1_dict, res.data)
+        self.assertIn(s2_dict, res.data)
+        self.assertNotIn(s3_dict, res.data)
+
 
 class ImageUploadTests(TestCase):
     """Tests for the image upload API"""
@@ -434,10 +539,3 @@ class ImageUploadTests(TestCase):
         res = self.client.post(url, payload, format='multipart')
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-
-
